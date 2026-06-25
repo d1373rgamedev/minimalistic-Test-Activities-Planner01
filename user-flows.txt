@@ -1,0 +1,167 @@
+# Testplanner - User Flows
+
+## Flow 1: First-Time Setup (Complete Onboarding)
+
+1. User opens index.html in the browser
+2. System loads default seed data (3 testers, 3 phases, 2 test objects, 3 sample entries)
+3. Timeline renders with default data; bars are visible for July 2026
+4. Settings show default save filename (testplanner-data.json)
+5. "Save" button persists data to local browser storage (OPFS) silently
+6. To configure a real file: Settings → Save File → "Change File" → pick location → subsequent saves go silently to that file
+
+---
+
+## Flow 2: Daily Planning Routine
+
+1. User opens index.html (data auto-loads from last session)
+2. Timeline shows existing planning entries as colored bars
+3. User adjusts the visible date range with month navigation or date inputs
+4. User zooms in (+) for detailed day view or zooms out (−) for overview
+5. User pans the timeline by click-dragging empty day cells
+6. Any conflicts are displayed in the conflict panel above the timeline
+
+---
+
+## Flow 3: Create a New Planning Entry
+
+**Option A — From toolbar:**
+1. Click "+ Entry" button in timeline toolbar
+2. Modal form opens
+3. Select test object (only active ones listed)
+4. Select tester (only active ones listed)
+5. Select phase (only active ones listed)
+6. Set start/end dates (defaults to today)
+7. Optionally add a comment
+8. Click "Create"
+
+**Option B — From timeline left panel:**
+1. Double-click the "No assignments" text or tester names below a test object
+2. Modal form opens with test object pre-selected
+
+**Option C — From empty day cell:**
+1. Double-click an empty day cell in the timeline
+2. Modal form opens with test object and date pre-selected
+
+---
+
+## Flow 4: Modify a Planning Entry
+
+**Via property panel:**
+1. Double-click a planning bar
+2. Property panel opens on the right side
+3. Modify any field: Test Object, Tester, Phase, Start Date, End Date, Comment
+4. Click "Apply" to save changes
+5. Or click "Cancel" to discard
+6. Or click "Delete" (right-aligned) to remove the entry
+
+**Via drag-and-drop:**
+1. Click and drag a planning bar horizontally to change dates
+2. Drag left/right resize handles to change start or end date
+3. Bar updates smoothly without jumping (CSS transform during drag)
+4. On release, system detects if dates actually changed; only saves if different
+
+---
+
+## Flow 5: Manage Testers
+
+1. Navigate to Master Data tab → Testers sub-tab
+2. View all testers in a table with Name, Email, Team, Status
+3. Click "+ Add Tester" → fill form → "Create"
+4. Click "Edit" on a tester → modify fields → "Update"
+5. Click "Deactivate" → tester hidden from Planning dropdowns
+6. Click "Activate" → tester reappears in Planning dropdowns
+7. Click "Delete" → confirm → tester and all linked entries removed
+
+---
+
+## Flow 6: Manage Phases
+
+1. Navigate to Master Data → Phases sub-tab
+2. View phases sorted by sequence with Name, Description, Color, Lead Time, Proc. Time, Status
+3. Click "+ Add Phase" → fill form (name, description, color, lead time, processing time) → "Create"
+4. Click "Edit" → modify fields → "Update"
+5. Click "↑" arrow to reorder phases
+6. Click "Deactivate"/"Activate" → phase hidden from/shown in Planning dropdowns
+7. Click "Delete" → confirm → phase and all linked entries removed
+
+---
+
+## Flow 7: Manage Test Objects
+
+1. Navigate to Master Data → Test Objects sub-tab
+2. View all test objects with Name, Description, Status, Priority, Active
+3. Click "+ Add Test Object" → fill form → "Create"
+4. Click "Edit" on a test object → modify fields → "Update"
+5. Click "Deactivate"/"Activate" → object hidden from/shown in Planning
+6. Click "Delete" → confirm → object and all linked entries removed
+
+**Quick add from Planning:**
+1. In Planning tab, click "+ Add" in the left panel header
+2. Opens the same Add Test Object form directly
+
+**Quick rename from Planning:**
+1. Double-click a test object name in the left panel
+2. Enter new name in prompt dialog
+
+---
+
+## Flow 8: Configure Settings
+
+1. Navigate to Settings tab
+2. **Working Days:** Toggle checkboxes for each weekday (default: Mon-Fri on, Sat-Sun off)
+3. **Phase Colors:** Use color picker next to each phase name
+4. **Display Settings:** Toggle weekend/today highlights, set timeline range in months
+5. **Save File:** View current file name, click "Change File" to set/update save location
+6. **Data Management:** Click "Reset" to restore factory defaults (with confirmation)
+
+---
+
+## Flow 9: Data Export/Import
+
+1. Click "Data ▼" dropdown in the header
+2. **Export:** Select "Export Data" → downloads testplanner-export.json
+3. **Import:** Select "Import Data" → file picker opens → select a JSON file → data loads and replaces current data
+4. Hidden file input is triggered from the dropdown for import
+
+---
+
+## Flow 10: Save and Persist Data
+
+1. All changes auto-save to localStorage (on every add/edit/delete/move)
+2. Click "Save" button:
+   - If file configured via "Change File" → writes silently to that JSON file + local browser storage
+   - If no file configured → writes silently to local browser storage + shows modal notification suggesting to configure a file
+3. On next browser startup, data auto-loads from local browser storage (OPFS)
+4. If a file handle was stored, data is also loaded from the JSON file
+
+---
+
+## Flow 11: Timeline Navigation and Visualization
+
+1. Timeline shows day columns, month labels, and colored phase bars
+2. **Navigate:** Use "← Month" / "Month →" buttons or change from/to date inputs
+3. **Zoom:** Click "−" or "+" in the toolbar to adjust day column width (20-80px)
+4. **Pan:** Click and drag an empty day cell to scroll the timeline horizontally
+5. **Today:** Click "Today" button to scroll to current date
+6. **Visual cues:** Weekends = gray, today = yellow, non-plannable = striped pattern, conflicts = pulsing red outline
+
+---
+
+## Flow 12: Conflict Detection and Resolution
+
+1. System automatically checks all entries for:
+   - Same tester + overlapping dates → conflict
+   - Same test object + overlapping dates (any phase) → prevented
+2. Conflicting bars get a pulsing red outline
+3. "Resource Conflicts" panel lists all conflicts with details
+4. User resolves by editing entry dates or reassigning testers via property panel
+
+---
+
+## Flow 13: Offline / No-Server Usage
+
+1. Application runs entirely from a single index.html file
+2. No server or internet required after initial load
+3. All data persists in localStorage and OPFS (browser storage)
+4. Optional: save to a local JSON file via "Change File" for visible file backup
+5. To use on another machine: copy index.html + data file (optional)

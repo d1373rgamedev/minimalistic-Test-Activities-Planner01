@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testplanner</title>
+<style>
+:root {
+  --bg: #f5f6fa;
+  --surface: #fff;
+  --border: #dcdde1;
+  --text: #2f3640;
+  --text-muted: #7f8c8d;
+  --primary: #40739e;
+  --primary-hover: #38618a;
+  --danger: #e74c3c;
+  --danger-hover: #c0392b;
+  --success: #27ae60;
+  --weekend-bg: #f1f2f6;
+  --today-bg: #fff3cd;
+  --non-plan-bg: #e8e8e8;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --radius: 6px;
+  --header-h: 52px;
+  --nav-h: 42px;
+  --bar-h: 28px;
+  --row-h: 60px;
+  --left-w: 280px;
+  --day-w: 36px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; display: flex; flex-direction: column; }
+
+/* Header */
+.header { background: var(--primary); color: #fff; padding: 0 20px; height: var(--header-h); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+.header-actions { display: flex; gap: 8px; }
+.header-actions button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 13px; }
+.header-actions button:hover { background: rgba(255,255,255,0.25); }
+.dropdown { position: relative; display: inline-block; }
+.dropdown-content { display: none; position: absolute; right: 0; top: 100%; background: #fff; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; min-width: 150px; margin-top: 4px; overflow: hidden; }
+.dropdown-content button { display: block; width: 100%; padding: 8px 16px; background: none; border: none; text-align: left; cursor: pointer; font-size: 13px; color: #333; }
+.dropdown-content button:hover { background: #f0f0f0; }
+.dropdown.open .dropdown-content { display: block; }
+
+/* Navigation */
+.nav { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); height: var(--nav-h); flex-shrink: 0; padding: 0 20px; }
+.nav button { background: none; border: none; padding: 0 20px; cursor: pointer; font-size: 14px; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
+.nav button:hover { color: var(--text); }
+.nav button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+/* Main content */
+.main { flex: 1; overflow: hidden; }
+
+/* Tab content */
+.tab { display: none; height: 100%; }
+.tab.active { display: flex; flex-direction: column; }
+
+/* ===== Master Data ===== */
+.master-data { display: flex; height: 100%; gap: 0; }
+.master-data .sidebar { width: 200px; border-right: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.master-data .sidebar button { display: block; width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 14px; color: var(--text-muted); border-left: 3px solid transparent; }
+.master-data .sidebar button:hover { background: #f8f9fa; color: var(--text); }
+.master-data .sidebar button.active { color: var(--primary); border-left-color: var(--primary); background: #f0f4f8; font-weight: 600; }
+.master-data .content { flex: 1; padding: 16px; overflow-y: auto; }
+
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+.toolbar h2 { font-size: 16px; font-weight: 600; }
+.toolbar .btn-group { display: flex; gap: 6px; }
+.btn { padding: 6px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 13px; color: var(--text); }
+.btn:hover { background: #f1f2f6; }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-danger { color: var(--danger); border-color: var(--danger); }
+.btn-danger:hover { background: #fde8e8; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+th { font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+td .actions { display: flex; gap: 4px; }
+td .actions button { padding: 2px 8px; font-size: 12px; }
+tr:hover td { background: #f8f9fa; }
+.inactive { opacity: 0.5; text-decoration: line-through; }
+
+/* ===== Modal ===== */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 8px; padding: 24px; width: 480px; max-width: 90vw; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+.modal h3 { font-size: 16px; margin-bottom: 16px; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; color: var(--text-muted); }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+.form-group .color-picker { display: flex; align-items: center; gap: 8px; }
+.form-group .color-picker input[type="color"] { width: 40px; height: 32px; padding: 2px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+.form-group .color-picker span { font-size: 13px; font-family: monospace; }
+.color-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+/* ===== Planning / Timeline ===== */
+.planning-view { display: flex; height: 100%; flex-direction: column; }
+.planning-controls { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.planning-controls label { font-size: 13px; color: var(--text-muted); }
+.planning-controls input[type="date"] { padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; }
+.zoom-controls { display: inline-flex; align-items: center; gap: 4px; }
+.zoom-controls button { font-size: 14px; font-weight: bold; line-height: 1; padding: 2px 8px; }
+.zoom-controls #zoomLevel { font-size: 11px; color: var(--text-muted); min-width: 32px; text-align: center; }
+.planning-body { display: flex; flex: 1; overflow: hidden; }
+
+/* Left panel */
+.planning-left { width: var(--left-w); flex-shrink: 0; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--border); }
+.planning-left-header { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); height: 42px; flex-shrink: 0; }
+.planning-left-row { padding: 8px 12px; border-bottom: 1px solid #eee; min-height: var(--row-h); display: flex; flex-direction: column; justify-content: center; }
+.planning-left-row .to-name { font-weight: 600; font-size: 13px; }
+.planning-left-row .to-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.planning-left-row .phase-tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; color: #fff; margin-right: 4px; }
+
+/* Timeline (right panel) */
+.planning-timeline { flex: 1; overflow: auto; position: relative; }
+.timeline-header { display: flex; position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--border); }
+.timeline-header .month-label { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.timeline-header .day-label { display: flex; align-items: center; justify-content: center; font-size: 11px; height: 22px; width: var(--day-w); flex-shrink: 0; }
+.timeline-header .day-label.weekend { background: var(--weekend-bg); }
+.timeline-header .day-label.today { background: var(--today-bg); font-weight: 700; }
+.timeline-header .day-label.non-plannable { background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px); }
+
+.timeline-body { position: relative; }
+.timeline-row { display: flex; height: var(--row-h); border-bottom: 1px solid #eee; position: relative; }
+.timeline-row .day-cell { width: var(--day-w); flex-shrink: 0; height: 100%; border-right: 1px solid #f0f0f0; cursor: grab; }
+.timeline-row .day-cell.weekend { background: var(--weekend-bg); }
+.timeline-row .day-cell.today { background: var(--today-bg); }
+.timeline-row .day-cell.non-plannable { background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 6px); }
+.planning-timeline.grabbing { cursor: grabbing; user-select: none; }
+.planning-timeline.grabbing .day-cell { cursor: grabbing; }
+
+/* Planning bars */
+.planning-bar { position: absolute; top: 4px; height: calc(var(--bar-h) - 2px); border-radius: 4px; cursor: grab; z-index: 5; display: flex; align-items: center; padding: 0 6px; font-size: 10px; color: rgba(255,255,255,0.9); overflow: visible; white-space: nowrap; text-overflow: ellipsis; min-width: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: opacity 0.15s; user-select: none; }
+.planning-bar:hover { opacity: 0.85; z-index: 6; }
+.planning-bar.dragging { opacity: 0.7; cursor: grabbing; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.planning-bar.conflict { outline: 2px solid var(--danger); outline-offset: -2px; animation: pulse-conflict 1.5s infinite; }
+.planning-bar.bar-resizing { cursor: col-resize; z-index: 15; opacity: 0.85; }
+@keyframes pulse-conflict { 0%,100% { outline-color: var(--danger); } 50% { outline-color: transparent; } }
+
+.planning-bar .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; flex: 1; font-size: 10px; }
+
+/* Resize handles */
+.planning-bar .resize-handle { position: absolute; top: 0; width: 8px; height: 100%; cursor: ew-resize; z-index: 10; }
+.planning-bar .resize-handle-left { left: 0; }
+.planning-bar .resize-handle-right { right: 0; }
+.planning-bar .resize-handle:hover { background: rgba(255,255,255,0.3); }
+
+/* Empty state / drop indicator */
+.timeline-row.drag-over { background: #e8f4fd; }
+
+/* ===== Property Panel ===== */
+.property-panel { position: fixed; right: 0; top: 94px; bottom: 0; width: 340px; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -4px 0 16px rgba(0,0,0,0.1); z-index: 50; display: none; flex-direction: column; overflow-y: auto; padding: 16px; }
+.property-panel.open { display: flex; }
+.property-panel h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.property-panel .pp-field { margin-bottom: 10px; }
+.property-panel .pp-field label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 3px; }
+.property-panel .pp-field .pp-value { font-size: 13px; padding: 4px 8px; background: #f8f9fa; border-radius: 4px; border: 1px solid transparent; cursor: pointer; }
+.property-panel .pp-field .pp-value:hover { border-color: var(--border); background: #fff; }
+.property-panel .pp-field input, .property-panel .pp-field select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; font-family: inherit; }
+.property-panel .pp-actions { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.property-panel .pp-close { position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); padding: 4px; line-height: 1; }
+.property-panel .pp-close:hover { color: var(--text); }
+
+/* ===== Settings ===== */
+.settings { padding: 20px; overflow-y: auto; max-width: 700px; }
+.settings section { margin-bottom: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.settings section h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+.setting-row label { font-size: 13px; }
+.setting-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+.setting-row input[type="color"] { width: 34px; height: 28px; padding: 1px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+.setting-row .color-preview { display: flex; align-items: center; gap: 8px; }
+.setting-row .color-hex { font-size: 12px; font-family: monospace; color: var(--text-muted); }
+.settings-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
+/* ===== Conflict Panel ===== */
+.conflict-panel { background: #fff5f5; border: 1px solid #fecaca; border-radius: var(--radius); padding: 10px 14px; margin-bottom: 10px; display: none; }
+.conflict-panel.visible { display: block; }
+.conflict-panel h4 { font-size: 13px; color: var(--danger); margin-bottom: 6px; }
+.conflict-panel ul { list-style: none; }
+.conflict-panel li { font-size: 12px; padding: 2px 0; color: #b91c1c; }
+.conflict-panel li::before { content: '! '; font-weight: 700; }
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  :root { --left-w: 180px; }
+  .planning-left { width: var(--left-w); }
+}
+
+/* ===== Import/Export ===== */
+.toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: #fff; padding: 10px 20px; border-radius: var(--radius); font-size: 13px; z-index: 9999; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { background: var(--danger); }
+.toast.success { background: var(--success); }
+
+/* Sortable phases */
+.sort-handle { cursor: grab; color: var(--text-muted); margin-right: 8px; user-select: none; }
+.sort-handle:active { cursor: grabbing; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="appTitle">Testplanner</h1>
+  <div class="header-actions">
+    <button id="btnSave" title="Save all data to a JSON file" onclick="saveToFile()">Save</button>
+    <div class="dropdown" id="dataDropdown">
+      <button id="btnDataMenu" title="Data management options">▼</button>
+      <div class="dropdown-content" id="dataDropdownContent">
+        <button onclick="exportData()" title="Export data as a JSON download">Export Data</button>
+        <button onclick="document.getElementById('importFile').click()" title="Import data from a JSON file">Import Data</button>
+      </div>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<div class="nav">
+  <button class="active" data-tab="planning" title="Timeline planning board" id="navPlanning">Planning</button>
+  <button data-tab="masterdata" title="Manage testers, phases and test objects" id="navMasterData">Master Data</button>
+  <button data-tab="settings" title="Configure working days, colors and display" id="navSettings">Settings</button>
+</div>
+
+<div class="main">
+
+<!-- ===== PLANNING TAB ===== -->
+<div class="tab active" id="tab-planning">
+  <div class="planning-view">
+    <div class="planning-controls">
+      <label for="tlFrom">From:</label>
+      <input type="date" id="tlFrom" title="Timeline start date" onchange="renderTimeline()">
+      <label for="tlTo">To:</label>
+      <input type="date" id="tlTo" title="Timeline end date" onchange="renderTimeline()">
+      <button class="btn btn-sm" id="btnPrevMonth" title="Go back one month" onclick="previousMonth()">&larr; Month</button>
+      <button class="btn btn-sm" id="btnNextMonth" title="Go forward one month" onclick="nextMonth()">Month &rarr;</button>
+      <span class="zoom-controls">
+        <button class="btn btn-sm" id="btnZoomOut" title="Zoom out" onclick="zoomTimeline(-5)">−</button>
+        <span id="zoomLevel" title="Current zoom level">36px</span>
+        <button class="btn btn-sm" id="btnZoomIn" title="Zoom in" onclick="zoomTimeline(5)">+</button>
+      </span>
+      <button class="btn btn-sm" id="btnGoToday" title="Scroll to today" onclick="goToday()">Today</button>
+      <button class="btn btn-primary btn-sm" id="btnNewEntry" title="Create a new planning entry" onclick="showNewPlanningEntry()">+ Entry</button>
+    </div>
+    <div class="conflict-panel" id="conflictPanel" title="Resource conflict warnings">
+      <h4>Resource Conflicts</h4>
+      <ul id="conflictList"></ul>
+    </div>
+    <div class="planning-body">
+      <div class="planning-left" id="planningLeft"></div>
+      <div class="planning-timeline" id="planningTimeline"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROPERTY PANEL ===== -->
+<div class="property-panel" id="propertyPanel">
+  <button class="pp-close" id="ppClose" title="Close property panel" onclick="closePropertyPanel()">&times;</button>
+  <h3 id="ppTitle">Planning Entry</h3>
+  <div class="pp-field">
+    <label>Test Object</label>
+    <select id="ppTestObject" title="Assigned test object"></select>
+  </div>
+  <div class="pp-field">
+    <label>Tester</label>
+    <select id="ppTester" title="Assigned tester"></select>
+  </div>
+  <div class="pp-field">
+    <label>Phase</label>
+    <select id="ppPhase" title="Test phase"></select>
+  </div>
+  <div class="pp-field">
+    <label>Start Date</label>
+    <input type="date" id="ppStartDate" title="Phase start date">
+  </div>
+  <div class="pp-field">
+    <label>End Date</label>
+    <input type="date" id="ppEndDate" title="Phase end date">
+  </div>
+  <div class="pp-field">
+    <label>Duration</label>
+    <span class="pp-value" id="ppDuration" title="Number of days this phase spans"></span>
+  </div>
+  <div class="pp-field">
+    <label>Comment</label>
+    <textarea id="ppComment" rows="3" title="Optional notes about this entry" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+  </div>
+  <div class="pp-actions">
+    <button class="btn btn-primary btn-sm" id="ppSave" title="Save changes to this planning entry">Apply</button>
+    <button class="btn btn-sm" id="ppCancel" title="Cancel changes and close" onclick="closePropertyPanel()">Cancel</button>
+    <button class="btn btn-sm btn-danger" id="ppDelete" title="Delete this planning entry" style="margin-left:auto">Delete</button>
+  </div>
+</div>
+
+<!-- ===== MASTER DATA TAB ===== -->
+<div class="tab" id="tab-masterdata">
+  <div class="master-data">
+    <div class="sidebar">
+      <button class="active" data-md="testers" id="mdTesters" title="Manage tester resources">Testers</button>
+      <button data-md="phases" id="mdPhases" title="Manage test phases and their order">Phases</button>
+      <button data-md="testobjects" id="mdTestObjects" title="Manage test objects">Test Objects</button>
+    </div>
+    <div class="content" id="mdContent">
+      <!-- rendered by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS TAB ===== -->
+<div class="tab" id="tab-settings">
+  <div class="settings" id="settingsContent">
+    <!-- rendered by JS -->
+  </div>
+</div>
+
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent">
+    <!-- rendered by JS -->
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DEFAULT SEED DATA =====
+const DEFAULT_DATA = {
+  testers: [
+    { id: 't1', name: 'Alice Johnson', email: 'alice@example.com', team: 'Alpha', active: true },
+    { id: 't2', name: 'Bob Smith', email: 'bob@example.com', team: 'Beta', active: true },
+    { id: 't3', name: 'Carol Davis', email: 'carol@example.com', team: 'Alpha', active: true }
+  ],
+  phases: [
+    { id: 'p1', name: 'Analysis', description: 'Requirements and specification review', sequence: 1, color: '#4A90D9', active: true, leadTime: 0, processingTime: 5 },
+    { id: 'p2', name: 'Planning', description: 'Test planning and strategy', sequence: 2, color: '#E67E22', active: true, leadTime: 1, processingTime: 5 },
+    { id: 'p3', name: 'Execution', description: 'Test case execution and reporting', sequence: 3, color: '#27AE60', active: true, leadTime: 2, processingTime: 10 }
+  ],
+  testObjects: [
+    { id: 'o1', name: 'Login Module', description: 'Authentication system', status: 'Active', priority: 'High', active: true },
+    { id: 'o2', name: 'Payment Gateway', description: 'Payment processing', status: 'Active', priority: 'High', active: true }
+  ],
+  planningEntries: [
+    { id: 'e1', testObjectId: 'o1', testerId: 't1', phaseId: 'p1', startDate: '2026-07-01', endDate: '2026-07-05', comment: '' },
+    { id: 'e2', testObjectId: 'o1', testerId: 't2', phaseId: 'p2', startDate: '2026-07-08', endDate: '2026-07-12', comment: '' },
+    { id: 'e3', testObjectId: 'o2', testerId: 't1', phaseId: 'p1', startDate: '2026-07-10', endDate: '2026-07-15', comment: '' }
+  ]
+};
+
+const DEFAULT_SETTINGS = {
+  workingDays: { 0: false, 1: true, 2: true, 3: true, 4: true, 5: true, 6: false },
+  phaseColors: { 'p1': '#4A90D9', 'p2': '#E67E22', 'p3': '#27AE60' },
+  displaySettings: { highlightWeekends: true, highlightToday: true, timelineRangeMonths: 2, timelineDayWidth: 36 }
+};
+
+// ===== STORE =====
+const Store = {
+  _prefix: 'testplanner_',
+  get(key) {
+    try { return JSON.parse(localStorage.getItem(this._prefix + key)); } catch { return null; }
+  },
+  set(key, val) {
+    localStorage.setItem(this._prefix + key, JSON.stringify(val));
+  },
+  getData() { return this.get('data') || JSON.parse(JSON.stringify(DEFAULT_DATA)); },
+  setData(d) { this.set('data', d); },
+  getSettings() { return this.get('settings') || JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); },
+  setSettings(s) { this.set('settings', s); }
+};
+
+// ===== STATE =====
+let data = Store.getData();
+let settings = Store.getSettings();
+let currentTab = 'planning';
+let currentMdTab = 'testers';
+let isDragging = false;
+let isResizing = false;
+let resizeSide = '';
+let dragStartX = 0;
+let dragStartEntry = null;
+let propPanelEntryId = null;
+let isPanning = false;
+let panStartX = 0;
+let panStartScrollLeft = 0;
+
+// ===== HELPERS =====
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseDate(s) { const p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+
+function diffDays(a, b) { return Math.round((b - a) / (1000 * 60 * 60 * 24)); }
+
+function isWeekend(d) { const wd = d.getDay(); return wd === 0 || wd === 6; }
+
+function isPlannable(d) { return settings.workingDays[d.getDay()] !== false; }
+
+function phaseById(id) { return data.phases.find(p => p.id === id); }
+
+function testerById(id) { return data.testers.find(t => t.id === id); }
+
+function testObjectById(id) { return data.testObjects.find(o => o.id === id); }
+
+function getWeekDayNames() { return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; }
+
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + (type || '') + ' show';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function escHtml(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== NAVIGATION =====
+document.querySelectorAll('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    currentTab = btn.dataset.tab;
+    closePropertyPanel();
+    if (currentTab === 'planning') renderTimeline();
+    if (currentTab === 'masterdata') renderMasterData();
+    if (currentTab === 'settings') renderSettings();
+  });
+});
+
+document.querySelectorAll('[data-md]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-md]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMdTab = btn.dataset.md;
+    renderMasterData();
+  });
+});
+
+// ===== MODAL =====
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalContent').innerHTML = '';
+}
+
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ===== DATA DROPDOWN =====
+document.getElementById('btnDataMenu').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('dataDropdown').classList.toggle('open');
+});
+document.addEventListener('click', () => {
+  document.getElementById('dataDropdown').classList.remove('open');
+});
+
+// ===== MAIN SAVE =====
+function saveData() {
+  Store.setData(data);
+  renderTimeline();
+  renderMasterData();
+  checkConflicts();
+  if (propPanelEntryId) updatePropertyPanel(propPanelEntryId);
+}
+
+function saveSettings() {
+  Store.setSettings(settings);
+}
+
+// ===== TESTERS =====
+function renderTesters() {
+  let html = `
+    <div class="toolbar">
+      <h2 id="testerListTitle">Testers</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" id="btnAddTester" title="Create a new tester resource" onclick="showTesterForm()">+ Add Tester</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Team</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+  `;
+  data.testers.forEach(t => {
+    html += `<tr class="${t.active ? '' : 'inactive'}">
+      <td>${escHtml(t.name)}</td>
+      <td>${escHtml(t.email || '-')}</td>
+      <td>${escHtml(t.team || '-')}</td>
+      <td>${t.active ? 'Active' : 'Inactive'}</td>
+      <td class="actions">
+        <button class="btn btn-sm" title="Edit this tester" onclick="showTesterForm('${t.id}')">Edit</button>
+        <button class="btn btn-sm ${t.active ? 'btn-danger' : ''}" title="${t.active ? 'Deactivate this tester' : 'Activate this tester'}" onclick="toggleTester('${t.id}')">${t.active ? 'Deactivate' : 'Activate'}</button>
+        <button class="btn btn-sm btn-danger" title="Delete this tester permanently" onclick="deleteTester('${t.id}')">Delete</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function showTesterForm(id) {
+  const t = id ? data.testers.find(x => x.id === id) : { name: '', email: '', team: '', active: true };
+  const isEdit = !!id;
+  openModal(`
+    <h3>${isEdit ? 'Edit' : 'Add'} Tester</h3>
+    <div class="form-group"><label for="fTName">Name *</label><input id="fTName" value="${escHtml(t.name)}" placeholder="Tester name" title="Full name of the tester"></div>
+    <div class="form-group"><label for="fTEmail">Email</label><input id="fTEmail" value="${escHtml(t.email || '')}" placeholder="email@example.com" title="Email address (optional)"></div>
+    <div class="form-group"><label for="fTTeam">Team</label><input id="fTTeam" value="${escHtml(t.team || '')}" placeholder="Team name" title="Team or group (optional)"></div>
+    <div class="form-group"><label><input type="checkbox" id="fTActive" ${t.active ? 'checked' : ''} title="Whether this tester is active"> Active</label></div>
+    <div class="modal-actions">
+      <button class="btn" title="Cancel and close" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" title="Save tester" onclick="saveTester('${id || ''}')">${isEdit ? 'Update' : 'Create'}</button>
+    </div>
+  `);
+}
+
+function saveTester(id) {
+  const name = document.getElementById('fTName').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+  if (id) {
+    const t = data.testers.find(x => x.id === id);
+    if (t) {
+      t.name = name;
+      t.email = document.getElementById('fTEmail').value.trim();
+      t.team = document.getElementById('fTTeam').value.trim();
+      t.active = document.getElementById('fTActive').checked;
+    }
+  } else {
+    data.testers.push({ id: uid(), name, email: document.getElementById('fTEmail').value.trim(), team: document.getElementById('fTTeam').value.trim(), active: document.getElementById('fTActive').checked });
+  }
+  closeModal();
+  saveData();
+  showToast('Tester saved', 'success');
+}
+
+function toggleTester(id) {
+  const t = data.testers.find(x => x.id === id);
+  if (t) { t.active = !t.active; saveData(); }
+}
+
+function deleteTester(id) {
+  if (!confirm('Delete this tester?')) return;
+  data.testers = data.testers.filter(x => x.id !== id);
+  data.planningEntries = data.planningEntries.filter(e => e.testerId !== id);
+  saveData();
+  showToast('Tester deleted', 'success');
+}
+
+// ===== PHASES =====
+function renderPhases() {
+  const sorted = [...data.phases].sort((a, b) => a.sequence - b.sequence);
+  let html = `
+    <div class="toolbar">
+      <h2 id="phaseListTitle">Phases</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" id="btnAddPhase" title="Create a new test phase" onclick="showPhaseForm()">+ Add Phase</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Order</th><th>Name</th><th>Description</th><th>Color</th><th>Lead&nbsp;Time</th><th>Proc.&nbsp;Time</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+  `;
+  sorted.forEach((p, i) => {
+    html += `<tr class="${p.active !== false ? '' : 'inactive'}">
+      <td><span class="sort-handle" onclick="movePhase('${p.id}', -1)" title="Move phase up">&uarr;</span> ${p.sequence}</td>
+      <td>${escHtml(p.name)}</td>
+      <td>${escHtml(p.description || '')}</td>
+      <td><span class="color-dot" style="background:${p.color}" title="Phase color"></span>${p.color}</td>
+      <td>${p.leadTime ?? 0}d</td>
+      <td>${p.processingTime ?? 0}d</td>
+      <td>${p.active !== false ? 'Active' : 'Inactive'}</td>
+      <td class="actions">
+        <button class="btn btn-sm" title="Edit this phase" onclick="showPhaseForm('${p.id}')">Edit</button>
+        <button class="btn btn-sm ${p.active !== false ? 'btn-danger' : ''}" title="${p.active !== false ? 'Deactivate this phase' : 'Activate this phase'}" onclick="togglePhase('${p.id}')">${p.active !== false ? 'Deactivate' : 'Activate'}</button>
+        <button class="btn btn-sm btn-danger" title="Delete this phase" onclick="deletePhase('${p.id}')">Delete</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function showPhaseForm(id) {
+  const p = id ? data.phases.find(x => x.id === id) : { name: '', description: '', color: '#4A90D9' };
+  const isEdit = !!id;
+  openModal(`
+    <h3>${isEdit ? 'Edit' : 'Add'} Phase</h3>
+    <div class="form-group"><label for="fPName">Name *</label><input id="fPName" value="${escHtml(p.name)}" placeholder="Phase name" title="Name of the test phase"></div>
+    <div class="form-group"><label for="fPDescription">Description</label><input id="fPDescription" value="${escHtml(p.description || '')}" placeholder="Optional description" title="Description of this phase"></div>
+    <div class="form-row">
+      <div class="form-group"><label for="fPLeadTime">Lead time (days)</label><input type="number" id="fPLeadTime" value="${p.leadTime ?? 0}" min="0" style="width:80px" title="Days needed before phase can start"></div>
+      <div class="form-group"><label for="fPProcTime">Processing time (days)</label><input type="number" id="fPProcTime" value="${p.processingTime ?? 0}" min="0" style="width:80px" title="Days the phase typically takes"></div>
+    </div>
+    <div class="form-group">
+      <label>Color</label>
+      <div class="color-picker">
+        <input type="color" id="fPColor" value="${p.color}" title="Display color for this phase">
+        <span id="fPColorVal">${p.color}</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" title="Cancel and close" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" title="Save phase" onclick="savePhase('${id || ''}')">${isEdit ? 'Update' : 'Create'}</button>
+    </div>
+  `);
+  document.getElementById('fPColor').addEventListener('input', function() {
+    document.getElementById('fPColorVal').textContent = this.value;
+  });
+}
+
+function savePhase(id) {
+  const name = document.getElementById('fPName').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+  const description = document.getElementById('fPDescription').value.trim();
+  const leadTime = Math.max(0, parseInt(document.getElementById('fPLeadTime').value) || 0);
+  const processingTime = Math.max(0, parseInt(document.getElementById('fPProcTime').value) || 0);
+  const color = document.getElementById('fPColor').value;
+  if (id) {
+    const p = data.phases.find(x => x.id === id);
+    if (p) { p.name = name; p.description = description; p.leadTime = leadTime; p.processingTime = processingTime; p.color = color; }
+  } else {
+    const maxSeq = data.phases.reduce((m, p) => Math.max(m, p.sequence), 0);
+    data.phases.push({ id: uid(), name, description, sequence: maxSeq + 1, color, active: true, leadTime, processingTime });
+  }
+  closeModal();
+  syncPhaseColors();
+  saveData();
+  showToast('Phase saved', 'success');
+}
+
+function togglePhase(id) {
+  const p = data.phases.find(x => x.id === id);
+  if (p) { p.active = p.active === false ? true : false; saveData(); }
+}
+
+function deletePhase(id) {
+  if (!confirm('Delete this phase?')) return;
+  data.phases = data.phases.filter(x => x.id !== id);
+  data.planningEntries = data.planningEntries.filter(e => e.phaseId !== id);
+  delete settings.phaseColors[id];
+  saveData();
+  saveSettings();
+  showToast('Phase deleted', 'success');
+}
+
+function movePhase(id, dir) {
+  const sorted = [...data.phases].sort((a, b) => a.sequence - b.sequence);
+  const idx = sorted.findIndex(p => p.id === id);
+  if (idx < 0) return;
+  const target = idx + dir;
+  if (target < 0 || target >= sorted.length) return;
+  const a = sorted[idx];
+  const b = sorted[target];
+  [a.sequence, b.sequence] = [b.sequence, a.sequence];
+  saveData();
+}
+
+function syncPhaseColors() {
+  data.phases.forEach(p => { settings.phaseColors[p.id] = p.color; });
+}
+
+// ===== TEST OBJECTS =====
+function renderTestObjects() {
+  let html = `
+    <div class="toolbar">
+      <h2 id="objectListTitle">Test Objects</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" id="btnAddTestObject" title="Create a new test object" onclick="showTestObjectForm()">+ Add Test Object</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Name</th><th>Description</th><th>Status</th><th>Priority</th><th>Active</th><th></th></tr></thead>
+      <tbody>
+  `;
+  data.testObjects.forEach(o => {
+    html += `<tr class="${o.active !== false ? '' : 'inactive'}">
+      <td>${escHtml(o.name)}</td>
+      <td>${escHtml((o.description || '').substring(0, 40))}</td>
+      <td>${escHtml(o.status || '-')}</td>
+      <td>${escHtml(o.priority || '-')}</td>
+      <td>${o.active !== false ? 'Active' : 'Inactive'}</td>
+      <td class="actions">
+        <button class="btn btn-sm" title="Edit this test object" onclick="showTestObjectForm('${o.id}')">Edit</button>
+        <button class="btn btn-sm ${o.active !== false ? 'btn-danger' : ''}" title="${o.active !== false ? 'Deactivate this test object' : 'Activate this test object'}" onclick="toggleTestObject('${o.id}')">${o.active !== false ? 'Deactivate' : 'Activate'}</button>
+        <button class="btn btn-sm btn-danger" title="Delete this test object" onclick="deleteTestObject('${o.id}')">Delete</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function showTestObjectForm(id) {
+  const o = id ? data.testObjects.find(x => x.id === id) : { name: '', description: '', status: 'Active', priority: 'Medium' };
+  const isEdit = !!id;
+  openModal(`
+    <h3>${isEdit ? 'Edit' : 'Add'} Test Object</h3>
+    <div class="form-group"><label for="fOName">Name *</label><input id="fOName" value="${escHtml(o.name)}" placeholder="Object name" title="Name of the test object"></div>
+    <div class="form-group"><label for="fODesc">Description</label><textarea id="fODesc" title="Description of the test object">${escHtml(o.description || '')}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label for="fOStatus">Status</label><input id="fOStatus" value="${escHtml(o.status || '')}" placeholder="e.g. Active" title="Current status"></div>
+      <div class="form-group"><label for="fOPriority">Priority</label>
+        <select id="fOPriority" title="Priority level">
+          <option ${o.priority === 'Low' ? 'selected' : ''}>Low</option>
+          <option ${o.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+          <option ${o.priority === 'High' ? 'selected' : ''}>High</option>
+          <option ${o.priority === 'Critical' ? 'selected' : ''}>Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" title="Cancel and close" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" title="Save test object" onclick="saveTestObject('${id || ''}')">${isEdit ? 'Update' : 'Create'}</button>
+    </div>
+  `);
+}
+
+function saveTestObject(id) {
+  const name = document.getElementById('fOName').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+  if (id) {
+    const o = data.testObjects.find(x => x.id === id);
+    if (o) {
+      o.name = name;
+      o.description = document.getElementById('fODesc').value.trim();
+      o.status = document.getElementById('fOStatus').value.trim();
+      o.priority = document.getElementById('fOPriority').value;
+    }
+  } else {
+    data.testObjects.push({ id: uid(), name, description: document.getElementById('fODesc').value.trim(), status: document.getElementById('fOStatus').value.trim(), priority: document.getElementById('fOPriority').value, active: true });
+  }
+  closeModal();
+  saveData();
+  showToast('Test object saved', 'success');
+}
+
+function toggleTestObject(id) {
+  const o = data.testObjects.find(x => x.id === id);
+  if (o) { o.active = o.active === false ? true : false; saveData(); }
+}
+
+function deleteTestObject(id) {
+  if (!confirm('Delete this test object?')) return;
+  data.testObjects = data.testObjects.filter(x => x.id !== id);
+  data.planningEntries = data.planningEntries.filter(e => e.testObjectId !== id);
+  saveData();
+  showToast('Test object deleted', 'success');
+}
+
+// ===== MASTER DATA RENDERER =====
+function renderMasterData() {
+  const el = document.getElementById('mdContent');
+  if (currentMdTab === 'testers') el.innerHTML = renderTesters();
+  else if (currentMdTab === 'phases') el.innerHTML = renderPhases();
+  else if (currentMdTab === 'testobjects') el.innerHTML = renderTestObjects();
+}
+
+// ===== TIMELINE =====
+function getTimelineRange() {
+  let from = document.getElementById('tlFrom').value;
+  let to = document.getElementById('tlTo').value;
+  const months = Math.max(1, settings.displaySettings.timelineRangeMonths || 2);
+  if (!from) {
+    const d = new Date();
+    d.setDate(1);
+    from = formatDate(d);
+  }
+  if (!to) {
+    const d = parseDate(from);
+    d.setMonth(d.getMonth() + months);
+    d.setDate(1);
+    d.setDate(d.getDate() - 1);
+    to = formatDate(d);
+  }
+  document.getElementById('tlFrom').value = from;
+  document.getElementById('tlTo').value = to;
+  return { from: parseDate(from), to: parseDate(to) };
+}
+
+function previousMonth() {
+  const d = parseDate(document.getElementById('tlFrom').value);
+  d.setMonth(d.getMonth() - 1);
+  document.getElementById('tlFrom').value = formatDate(d);
+  const d2 = parseDate(document.getElementById('tlTo').value);
+  d2.setMonth(d2.getMonth() - 1);
+  document.getElementById('tlTo').value = formatDate(d2);
+  renderTimeline();
+}
+
+function nextMonth() {
+  const d = parseDate(document.getElementById('tlFrom').value);
+  d.setMonth(d.getMonth() + 1);
+  document.getElementById('tlFrom').value = formatDate(d);
+  const d2 = parseDate(document.getElementById('tlTo').value);
+  d2.setMonth(d2.getMonth() + 1);
+  document.getElementById('tlTo').value = formatDate(d2);
+  renderTimeline();
+}
+
+function goToday() {
+  const today = new Date();
+  const range = getTimelineRange();
+  const days = diffDays(range.from, today);
+  const el = document.querySelector('.planning-timeline');
+  if (el) el.scrollLeft = Math.max(0, days * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-w')) - el.clientWidth / 2);
+}
+
+function applyZoomLevel() {
+  const w = Math.max(20, Math.min(80, settings.displaySettings.timelineDayWidth || 36));
+  document.documentElement.style.setProperty('--day-w', w + 'px');
+  const el = document.getElementById('zoomLevel');
+  if (el) el.textContent = w + 'px';
+}
+
+function zoomTimeline(delta) {
+  settings.displaySettings.timelineDayWidth = Math.max(20, Math.min(80, (settings.displaySettings.timelineDayWidth || 36) + delta));
+  applyZoomLevel();
+  saveSettings();
+  renderTimeline();
+}
+
+function renderTimeline() {
+  applyZoomLevel();
+  const range = getTimelineRange();
+  const leftEl = document.getElementById('planningLeft');
+  const timelineEl = document.getElementById('planningTimeline');
+
+  const days = [];
+  let cur = new Date(range.from);
+  while (cur <= range.to) {
+    days.push(new Date(cur));
+    cur = addDays(cur, 1);
+  }
+
+  const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-w'));
+  const totalW = days.length * dayW;
+  const today = new Date();
+  const todayStr = formatDate(today);
+
+  const sortedObjects = data.testObjects.filter(o => o.active !== false);
+  const entriesByObject = {};
+  sortedObjects.forEach(o => { entriesByObject[o.id] = []; });
+  data.planningEntries.forEach(e => {
+    if (!entriesByObject[e.testObjectId]) entriesByObject[e.testObjectId] = [];
+    entriesByObject[e.testObjectId].push(e);
+  });
+
+  // Left panel
+  let leftHtml = `<div class="planning-left-header" id="planningLeftHeader">Test Objects <button class="btn btn-sm btn-primary" id="btnPlanningAddObject" title="Create a new test object" onclick="showTestObjectForm()" style="margin-left:auto">+ Add</button></div>`;
+  sortedObjects.forEach(o => {
+    const entries = entriesByObject[o.id] || [];
+    const testerNames = [...new Set(entries.map(e => { const t = testerById(e.testerId); return t ? t.name : '?'; }))].join(', ');
+    leftHtml += `<div class="planning-left-row" id="plr-${o.id}" data-oid="${o.id}">
+      <div class="to-name" title="Double-click to rename" ondblclick="inlineEditObjectName('${o.id}')">${escHtml(o.name)}</div>
+      <div class="to-meta" title="Double-click to assign testers" ondblclick="showPlanningEntryForm(null,'${o.id}')">${testerNames ? escHtml(testerNames) : 'No assignments'}</div>
+    </div>`;
+  });
+  if (!sortedObjects.length) {
+    leftHtml += `<div class="planning-left-row" style="color:var(--text-muted);font-style:italic">No test objects</div>`;
+  }
+  leftEl.innerHTML = leftHtml;
+
+  // Timeline header
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let monthGroups = [];
+  days.forEach(d => {
+    const mKey = d.getFullYear() + '-' + d.getMonth();
+    if (!monthGroups[mKey]) {
+      monthGroups[mKey] = { first: d, count: 0 };
+    }
+    monthGroups[mKey].count++;
+  });
+  let monthHtml = '';
+  Object.values(monthGroups).forEach(mg => {
+    monthHtml += `<div class="month-label" style="width:${mg.count * dayW}px;height:20px" title="${monthNames[mg.first.getMonth()]} ${mg.first.getFullYear()}">${monthNames[mg.first.getMonth()]} ${mg.first.getFullYear()}</div>`;
+  });
+  let dayHtml = '';
+  days.forEach(d => {
+    const ds = formatDate(d);
+    const classes = ['day-label'];
+    if (isWeekend(d)) classes.push('weekend');
+    if (ds === todayStr) classes.push('today');
+    if (!isPlannable(d)) classes.push('non-plannable');
+    dayHtml += `<div class="${classes.join(' ')}" style="width:${dayW}px" title="${getWeekDayNames()[d.getDay()]} ${ds}">${d.getDate()}</div>`;
+  });
+  const headerHtml = `<div class="timeline-header" style="display:flex;flex-direction:column;width:${totalW}px"><div class="timeline-header" style="display:flex">${monthHtml}</div><div class="timeline-header" style="display:flex">${dayHtml}</div></div>`;
+
+  // Timeline body
+  let bodyHtml = '';
+  const barColors = settings.phaseColors || {};
+  sortedObjects.forEach(o => {
+    const entries = entriesByObject[o.id] || [];
+    bodyHtml += `<div class="timeline-row" id="tlr-${o.id}" data-oid="${o.id}" style="width:${totalW}px">`;
+    days.forEach(d => {
+      const ds = formatDate(d);
+      const classes = ['day-cell'];
+      if (isWeekend(d)) classes.push('weekend');
+      if (ds === todayStr) classes.push('today');
+      if (!isPlannable(d)) classes.push('non-plannable');
+      bodyHtml += `<div class="${classes.join(' ')}" data-date="${ds}" title="${getWeekDayNames()[d.getDay()]} ${ds}" ondblclick="onDayClick(event, '${ds}')"></div>`;
+    });
+    entries.forEach(e => {
+      const phase = phaseById(e.phaseId);
+      const tester = testerById(e.testerId);
+      const barColor = phase ? (barColors[phase.id] || phase.color || '#666') : '#666';
+      const barLabel = phase ? phase.name : '?';
+      const eStart = parseDate(e.startDate);
+      const eEnd = parseDate(e.endDate);
+      const leftDays = diffDays(range.from, eStart);
+      const spanDays = diffDays(eStart, eEnd) + 1;
+      if (leftDays + spanDays > 0 && leftDays < days.length) {
+        const visLeft = Math.max(0, leftDays) * dayW;
+        const visWidth = Math.min(spanDays, days.length - Math.max(0, leftDays)) * dayW;
+        if (visWidth > 0) {
+          const conflicts = checkEntryConflicts(e);
+          const eid = e.id;
+          bodyHtml += `<div class="planning-bar ${conflicts.length ? 'conflict' : ''}" 
+            id="bar-${eid}"
+            data-eid="${eid}"
+            style="left:${visLeft}px;width:${Math.max(visWidth, 20)}px;background:${barColor}"
+            title="${barLabel}: ${escHtml(o.name)} / ${escHtml(tester ? tester.name : '?')} [${e.startDate} - ${e.endDate}]"
+            onmousedown="startDragEntry(event, '${eid}')">
+            <span class="bar-label">${barLabel}</span>
+            <span class="resize-handle resize-handle-left" title="Drag to change start date" onmousedown="event.stopPropagation(); startResizeEntry(event, '${eid}', 'left')"></span>
+            <span class="resize-handle resize-handle-right" title="Drag to change end date" onmousedown="event.stopPropagation(); startResizeEntry(event, '${eid}', 'right')"></span>
+          </div>`;
+        }
+      }
+    });
+    bodyHtml += '</div>';
+  });
+
+  if (!sortedObjects.length) {
+    bodyHtml = `<div class="timeline-row" style="width:${totalW}px;height:80px;align-items:center;justify-content:center;color:var(--text-muted)">Add test objects and planning entries to see the timeline</div>`;
+  }
+
+  timelineEl.innerHTML = headerHtml + '<div class="timeline-body">' + bodyHtml + '</div>';
+
+  const todayIdx = days.findIndex(d => formatDate(d) === todayStr);
+  if (todayIdx >= 0) {
+    const scrollTo = Math.max(0, todayIdx * dayW - timelineEl.clientWidth / 3);
+    timelineEl.scrollLeft = scrollTo;
+  }
+}
+
+// ===== PHASE OVERLAP VALIDATION =====
+function checkPhaseOverlap(testObjectId, startDate, endDate, excludeId) {
+  return data.planningEntries.some(other => {
+    if (other.id === excludeId) return false;
+    if (other.testObjectId !== testObjectId) return false;
+    const aS = parseDate(startDate), aE = parseDate(endDate);
+    const bS = parseDate(other.startDate), bE = parseDate(other.endDate);
+    return aS <= bE && aE >= bS;
+  });
+}
+
+// ===== CONFLICT DETECTION =====
+function checkEntryConflicts(entry) {
+  const conflicts = [];
+  data.planningEntries.forEach(other => {
+    if (other.id === entry.id) return;
+    if (other.testerId !== entry.testerId) return;
+    const aS = parseDate(entry.startDate), aE = parseDate(entry.endDate);
+    const bS = parseDate(other.startDate), bE = parseDate(other.endDate);
+    if (aS <= bE && aE >= bS) {
+      const tester = testerById(entry.testerId);
+      const o1 = testObjectById(entry.testObjectId);
+      const o2 = testObjectById(other.testObjectId);
+      conflicts.push(`${tester ? tester.name : '?'}: ${o1 ? o1.name : '?'} overlaps with ${o2 ? o2.name : '?'}`);
+    }
+  });
+  return conflicts;
+}
+
+function checkConflicts() {
+  const allConflicts = [];
+  const seen = new Set();
+  data.planningEntries.forEach(e => {
+    const c = checkEntryConflicts(e);
+    c.forEach(msg => {
+      if (!seen.has(msg)) { seen.add(msg); allConflicts.push(msg); }
+    });
+  });
+  const panel = document.getElementById('conflictPanel');
+  const list = document.getElementById('conflictList');
+  if (allConflicts.length) {
+    panel.classList.add('visible');
+    list.innerHTML = allConflicts.map(c => `<li>${escHtml(c)}</li>`).join('');
+  } else {
+    panel.classList.remove('visible');
+  }
+}
+
+// ===== PLANNING ENTRY MODAL FORM =====
+function onDayClick(event, dateStr) {
+  const row = event.currentTarget.closest('.timeline-row');
+  const objectId = row ? row.dataset.oid : null;
+  showPlanningEntryForm(null, objectId, dateStr);
+}
+
+function showNewPlanningEntry() {
+  showPlanningEntryForm(null);
+}
+
+function showPlanningEntryForm(id, preselectObjectId, preselectDate) {
+  const e = id ? data.planningEntries.find(x => x.id === id) : { testObjectId: preselectObjectId || '', testerId: '', phaseId: '', startDate: preselectDate || formatDate(new Date()), endDate: preselectDate || formatDate(new Date()), comment: '' };
+  const isEdit = !!id;
+  const testerOpts = data.testers.filter(t => t.active).map(t => `<option value="${t.id}" ${e.testerId === t.id ? 'selected' : ''}>${escHtml(t.name)}</option>`).join('');
+  const phaseOpts = data.phases.filter(p => p.active !== false).sort((a,b) => a.sequence - b.sequence).map(p => `<option value="${p.id}" ${e.phaseId === p.id ? 'selected' : ''}>${escHtml(p.name)}</option>`).join('');
+  const objOpts = data.testObjects.filter(o => o.active !== false).map(o => `<option value="${o.id}" ${e.testObjectId === o.id ? 'selected' : ''}>${escHtml(o.name)}</option>`).join('');
+  openModal(`
+    <h3>${isEdit ? 'Edit' : 'New'} Planning Entry</h3>
+    <div class="form-group"><label for="fETestObject">Test Object *</label><select id="fETestObject" title="Select the test object">${objOpts}</select></div>
+    <div class="form-group"><label for="fETester">Tester *</label><select id="fETester" title="Select the assigned tester">${testerOpts}</select></div>
+    <div class="form-group"><label for="fEPhase">Phase *</label><select id="fEPhase" title="Select the test phase">${phaseOpts}</select></div>
+    <div class="form-row">
+      <div class="form-group"><label for="fEStart">Start Date *</label><input type="date" id="fEStart" value="${e.startDate}" title="Phase start date"></div>
+      <div class="form-group"><label for="fEEnd">End Date *</label><input type="date" id="fEEnd" value="${e.endDate}" title="Phase end date"></div>
+    </div>
+    <div class="form-group"><label for="fEComment">Comment</label><textarea id="fEComment" placeholder="Optional notes" title="Optional notes about this entry">${escHtml(e.comment || '')}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn" title="Cancel and close" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" title="Save planning entry" onclick="savePlanningEntry('${id || ''}')">${isEdit ? 'Update' : 'Create'}</button>
+    </div>
+  `);
+}
+
+function savePlanningEntry(id) {
+  const testObjectId = document.getElementById('fETestObject').value;
+  const testerId = document.getElementById('fETester').value;
+  const phaseId = document.getElementById('fEPhase').value;
+  const startDate = document.getElementById('fEStart').value;
+  const endDate = document.getElementById('fEEnd').value;
+  const comment = document.getElementById('fEComment').value.trim();
+  if (!testObjectId || !testerId || !phaseId || !startDate || !endDate) {
+    showToast('All required fields must be filled', 'error'); return;
+  }
+  if (startDate > endDate) {
+    showToast('End date must be on or after start date', 'error'); return;
+  }
+  // Phase overlap check
+  if (checkPhaseOverlap(testObjectId, startDate, endDate, id || null)) {
+    showToast('Phases must not overlap for the same test object', 'error'); return;
+  }
+  if (id) {
+    const e = data.planningEntries.find(x => x.id === id);
+    if (e) {
+      e.testObjectId = testObjectId;
+      e.testerId = testerId;
+      e.phaseId = phaseId;
+      e.startDate = startDate;
+      e.endDate = endDate;
+      e.comment = comment;
+    }
+  } else {
+    data.planningEntries.push({ id: uid(), testObjectId, testerId, phaseId, startDate, endDate, comment });
+  }
+  closeModal();
+  saveData();
+  showToast('Planning entry saved', 'success');
+}
+
+// ===== DRAG AND DROP (no re-render during drag) =====
+let dragBarOffsetX = 0;
+
+function startDragEntry(e, entryId) {
+  if (e.button !== 0) return;
+  if (isResizing) return;
+  e.preventDefault();
+  const entry = data.planningEntries.find(x => x.id === entryId);
+  if (!entry) return;
+
+  const barEl = e.currentTarget;
+  const rect = barEl.getBoundingClientRect();
+  const timelineEl = document.getElementById('planningTimeline');
+  const tlRect = timelineEl.getBoundingClientRect();
+  dragBarOffsetX = e.clientX - rect.left;
+
+  isDragging = true;
+  dragStartEntry = entry;
+  dragStartX = e.clientX;
+  const origStartDate = entry.startDate;
+  const origEndDate = entry.endDate;
+
+  barEl.classList.add('dragging');
+  barEl.style.transform = 'translateY(-2px)';
+
+  const onMove = (ev) => {
+    if (!isDragging) return;
+    ev.preventDefault();
+    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-w'));
+    const range = getTimelineRange();
+    const scrollLeft = timelineEl.scrollLeft;
+    const totalDays = diffDays(range.from, range.to) + 1;
+
+    const x = ev.clientX - tlRect.left + scrollLeft - dragBarOffsetX;
+    const dayIdx = Math.round(x / dayW);
+    const origSpan = diffDays(parseDate(entry.startDate), parseDate(entry.endDate));
+
+    let newStart = addDays(range.from, dayIdx);
+    while (!isPlannable(newStart) && diffDays(range.from, newStart) < totalDays) {
+      newStart = addDays(newStart, 1);
+    }
+    let newEnd = addDays(newStart, origSpan);
+    while (!isPlannable(newEnd) && diffDays(range.from, newEnd) < totalDays) {
+      newEnd = addDays(newEnd, 1);
+    }
+    if (newStart < range.from) newStart = new Date(range.from);
+    if (newEnd > range.to) newEnd = new Date(range.to);
+
+    // Don't update data during drag - just move the element
+    const newLeft = diffDays(range.from, newStart) * dayW;
+    barEl.style.left = newLeft + 'px';
+  };
+
+  const onUp = () => {
+    isDragging = false;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+
+    const bars = document.querySelectorAll('.planning-bar.dragging');
+    bars.forEach(b => { b.classList.remove('dragging'); b.style.transform = ''; });
+
+    // Now update data based on final position
+    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-w'));
+    const range = getTimelineRange();
+    const barEl = bars[0];
+    if (barEl) {
+      const left = parseInt(barEl.style.left);
+      const newStartDay = Math.round(left / dayW);
+      const origSpan = diffDays(parseDate(entry.startDate), parseDate(entry.endDate));
+      let finalStart = addDays(range.from, newStartDay);
+      const totalDays = diffDays(range.from, range.to) + 1;
+      while (!isPlannable(finalStart) && diffDays(range.from, finalStart) < totalDays) {
+        finalStart = addDays(finalStart, 1);
+      }
+      let finalEnd = addDays(finalStart, origSpan);
+      while (!isPlannable(finalEnd) && diffDays(range.from, finalEnd) < totalDays) {
+        finalEnd = addDays(finalEnd, 1);
+      }
+      if (finalStart < range.from) finalStart = new Date(range.from);
+      if (finalEnd > range.to) finalEnd = new Date(range.to);
+
+      // Phase overlap validation
+      const newStartStr = formatDate(finalStart);
+      const newEndStr = formatDate(finalEnd);
+      if (checkPhaseOverlap(entry.testObjectId, newStartStr, newEndStr, entry.id)) {
+        showToast('Phases must not overlap for the same test object', 'error');
+        renderTimeline();
+        dragStartEntry = null;
+        return;
+      }
+
+      entry.startDate = newStartStr;
+      entry.endDate = newEndStr;
+    }
+    // Skip save/render if dates didn't change (e.g. double-click)
+    const finalStartStr = entry.startDate;
+    const finalEndStr = entry.endDate;
+    if (finalStartStr === origStartDate && finalEndStr === origEndDate) {
+      dragStartEntry = null;
+      return;
+    }
+    saveData();
+    showToast('Entry moved', 'success');
+    dragStartEntry = null;
+  };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ===== RESIZE HANDLES =====
+function startResizeEntry(e, entryId, side) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const entry = data.planningEntries.find(x => x.id === entryId);
+  if (!entry) return;
+
+  isResizing = true;
+  resizeSide = side;
+  dragStartEntry = entry;
+  dragStartX = e.clientX;
+  const origStartDate = entry.startDate;
+  const origEndDate = entry.endDate;
+
+  const barEl = document.getElementById('bar-' + entryId);
+  if (!barEl) return;
+  barEl.classList.add('bar-resizing');
+
+  const timelineEl = document.getElementById('planningTimeline');
+  const tlRect = timelineEl.getBoundingClientRect();
+  const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-w'));
+  const range = getTimelineRange();
+
+  const onMove = (ev) => {
+    if (!isResizing) return;
+    ev.preventDefault();
+    const scrollLeft = timelineEl.scrollLeft;
+    const x = ev.clientX - tlRect.left + scrollLeft;
+    const dayIdx = Math.round(x / dayW);
+    const clickedDate = addDays(range.from, dayIdx);
+    const totalDays = diffDays(range.from, range.to) + 1;
+
+    if (side === 'left') {
+      let newStart = new Date(clickedDate);
+      while (!isPlannable(newStart) && diffDays(range.from, newStart) < totalDays) {
+        newStart = addDays(newStart, 1);
+      }
+      const origEnd = parseDate(entry.endDate);
+      if (newStart > origEnd) newStart = origEnd;
+      if (newStart < range.from) newStart = new Date(range.from);
+
+      const newLeft = diffDays(range.from, newStart) * dayW;
+      const newWidth = (diffDays(newStart, origEnd) + 1) * dayW;
+      barEl.style.left = newLeft + 'px';
+      barEl.style.width = Math.max(newWidth, dayW) + 'px';
+    } else {
+      let newEnd = new Date(clickedDate);
+      while (!isPlannable(newEnd) && diffDays(range.from, newEnd) < totalDays) {
+        newEnd = addDays(newEnd, 1);
+      }
+      const origStart = parseDate(entry.startDate);
+      if (newEnd < origStart) newEnd = origStart;
+      if (newEnd > range.to) newEnd = new Date(range.to);
+
+      const newWidth = (diffDays(origStart, newEnd) + 1) * dayW;
+      barEl.style.width = Math.max(newWidth, dayW) + 'px';
+    }
+  };
+
+  const onUp = () => {
+    isResizing = false;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    const bars = document.querySelectorAll('.bar-resizing');
+    bars.forEach(b => b.classList.remove('bar-resizing'));
+
+    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-w'));
+    const range = getTimelineRange();
+    const barEl = document.getElementById('bar-' + entry.id);
+    if (barEl) {
+      const left = parseInt(barEl.style.left);
+      const width = parseInt(barEl.style.width);
+      const startDay = Math.round(left / dayW);
+      const spanDays = Math.round(width / dayW);
+      const endDay = startDay + spanDays - 1;
+      let finalStart = addDays(range.from, startDay);
+      let finalEnd = addDays(range.from, endDay);
+      const totalDays = diffDays(range.from, range.to) + 1;
+      while (!isPlannable(finalStart) && diffDays(range.from, finalStart) < totalDays) {
+        finalStart = addDays(finalStart, 1);
+      }
+      while (!isPlannable(finalEnd) && diffDays(range.from, finalEnd) < totalDays) {
+        finalEnd = addDays(finalEnd, 1);
+      }
+      if (finalStart < range.from) finalStart = new Date(range.from);
+      if (finalEnd > range.to) finalEnd = new Date(range.to);
+
+      const newStartStr = formatDate(finalStart);
+      const newEndStr = formatDate(finalEnd);
+      if (checkPhaseOverlap(entry.testObjectId, newStartStr, newEndStr, entry.id)) {
+        showToast('Phases must not overlap for the same test object', 'error');
+        renderTimeline();
+        dragStartEntry = null;
+        return;
+      }
+
+      entry.startDate = newStartStr;
+      entry.endDate = newEndStr;
+    }
+    // Skip save/render if dates didn't change
+    const finalStartStr = entry.startDate;
+    const finalEndStr = entry.endDate;
+    if (finalStartStr === origStartDate && finalEndStr === origEndDate) {
+      dragStartEntry = null;
+      return;
+    }
+    saveData();
+    showToast('Entry resized', 'success');
+    dragStartEntry = null;
+  };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ===== PROPERTY PANEL =====
+function openPropertyPanel(entryId) {
+  propPanelEntryId = entryId;
+  document.getElementById('propertyPanel').classList.add('open');
+  updatePropertyPanel(entryId);
+}
+
+function closePropertyPanel() {
+  propPanelEntryId = null;
+  document.getElementById('propertyPanel').classList.remove('open');
+}
+
+function updatePropertyPanel(entryId) {
+  const entry = data.planningEntries.find(x => x.id === entryId);
+  if (!entry) { closePropertyPanel(); return; }
+
+  const objOpts = data.testObjects.filter(o => o.active !== false).map(o => `<option value="${o.id}" ${entry.testObjectId === o.id ? 'selected' : ''}>${escHtml(o.name)}</option>`).join('');
+  const testerOpts = data.testers.filter(t => t.active).map(t => `<option value="${t.id}" ${entry.testerId === t.id ? 'selected' : ''}>${escHtml(t.name)}</option>`).join('');
+  const phaseOpts = data.phases.filter(p => p.active !== false).sort((a,b) => a.sequence - b.sequence).map(p => `<option value="${p.id}" ${entry.phaseId === p.id ? 'selected' : ''}>${escHtml(p.name)}</option>`).join('');
+  const duration = diffDays(parseDate(entry.startDate), parseDate(entry.endDate)) + 1;
+
+  document.getElementById('ppTitle').textContent = 'Planning Entry: ' + uid().substring(0, 8);
+  document.getElementById('ppTestObject').innerHTML = objOpts;
+  document.getElementById('ppTester').innerHTML = testerOpts;
+  document.getElementById('ppPhase').innerHTML = phaseOpts;
+  document.getElementById('ppStartDate').value = entry.startDate;
+  document.getElementById('ppEndDate').value = entry.endDate;
+  document.getElementById('ppDuration').textContent = duration + ' day' + (duration !== 1 ? 's' : '');
+  document.getElementById('ppComment').value = entry.comment || '';
+  document.getElementById('ppSave').onclick = () => savePropertyPanel(entryId);
+  document.getElementById('ppDelete').onclick = () => deleteFromPropertyPanel(entryId);
+
+  // Auto-update duration when dates change
+  document.getElementById('ppStartDate').onchange = () => updatePPDuration();
+  document.getElementById('ppEndDate').onchange = () => updatePPDuration();
+}
+
+function updatePPDuration() {
+  const s = document.getElementById('ppStartDate').value;
+  const e = document.getElementById('ppEndDate').value;
+  if (s && e) {
+    const dur = diffDays(parseDate(s), parseDate(e)) + 1;
+    document.getElementById('ppDuration').textContent = dur + ' day' + (dur !== 1 ? 's' : '');
+  }
+}
+
+function savePropertyPanel(entryId) {
+  const entry = data.planningEntries.find(x => x.id === entryId);
+  if (!entry) return;
+  const testObjectId = document.getElementById('ppTestObject').value;
+  const testerId = document.getElementById('ppTester').value;
+  const phaseId = document.getElementById('ppPhase').value;
+  const startDate = document.getElementById('ppStartDate').value;
+  const endDate = document.getElementById('ppEndDate').value;
+  const comment = document.getElementById('ppComment').value.trim();
+  if (startDate > endDate) { showToast('End date must be on or after start date', 'error'); return; }
+  if (checkPhaseOverlap(testObjectId, startDate, endDate, entry.id)) {
+    showToast('Phases must not overlap for the same test object', 'error'); return;
+  }
+  entry.testObjectId = testObjectId;
+  entry.testerId = testerId;
+  entry.phaseId = phaseId;
+  entry.startDate = startDate;
+  entry.endDate = endDate;
+  entry.comment = comment;
+  saveData();
+  updatePropertyPanel(entryId);
+  showToast('Entry updated', 'success');
+}
+
+function deleteFromPropertyPanel(entryId) {
+  if (!confirm('Delete this planning entry?')) return;
+  data.planningEntries = data.planningEntries.filter(x => x.id !== entryId);
+  closePropertyPanel();
+  saveData();
+  showToast('Entry deleted', 'success');
+}
+
+// ===== INLINE EDIT TEST OBJECT NAME =====
+function inlineEditObjectName(objectId) {
+  const o = data.testObjects.find(x => x.id === objectId);
+  if (!o) return;
+  const newName = prompt('Rename test object:', o.name);
+  if (newName && newName.trim() && newName.trim() !== o.name) {
+    o.name = newName.trim();
+    saveData();
+    showToast('Test object renamed', 'success');
+  }
+}
+
+// ===== SETTINGS =====
+function renderSettings() {
+  const el = document.getElementById('settingsContent');
+  const wdNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  let wdHtml = '';
+  for (let i = 0; i < 7; i++) {
+    const checked = settings.workingDays[i] !== false;
+    wdHtml += `<div class="setting-row">
+      <label>${wdNames[i]}</label>
+      <input type="checkbox" data-wd="${i}" ${checked ? 'checked' : ''} title="Toggle ${wdNames[i]} as a planning day" onchange="toggleWorkingDay(${i})">
+    </div>`;
+  }
+
+  let phaseHtml = '';
+  [...data.phases].sort((a,b) => a.sequence - b.sequence).forEach(p => {
+    const c = settings.phaseColors[p.id] || p.color;
+    phaseHtml += `<div class="setting-row" data-phase-id="${p.id}">
+      <label><span class="color-dot" style="background:${c}" title="Color dot for ${escHtml(p.name)}"></span>${escHtml(p.name)}</label>
+      <div class="color-preview">
+        <input type="color" value="${c}" title="Change color for ${escHtml(p.name)}" onchange="changePhaseColor('${p.id}', this.value)">
+        <span class="color-hex">${c}</span>
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML = `
+    <section>
+      <h3>Working Days</h3>
+      ${wdHtml}
+    </section>
+    <section>
+      <h3>Phase Colors</h3>
+      ${phaseHtml}
+    </section>
+    <section>
+      <h3>Display</h3>
+      <div class="setting-row">
+        <label>Highlight weekends</label>
+        <input type="checkbox" ${settings.displaySettings.highlightWeekends !== false ? 'checked' : ''} title="Show weekends with a gray background" onchange="settings.displaySettings.highlightWeekends = this.checked; saveSettings(); renderTimeline();">
+      </div>
+      <div class="setting-row">
+        <label>Highlight today</label>
+        <input type="checkbox" ${settings.displaySettings.highlightToday !== false ? 'checked' : ''} title="Highlight today's column" onchange="settings.displaySettings.highlightToday = this.checked; saveSettings(); renderTimeline();">
+      </div>
+      <div class="setting-row">
+        <label>Timeline range (months)</label>
+        <input type="number" value="${settings.displaySettings.timelineRangeMonths || 2}" min="1" max="12" style="width:80px" title="Number of months to show in the timeline" onchange="settings.displaySettings.timelineRangeMonths = Math.max(1, Math.min(12, +this.value)); saveSettings(); renderTimeline();">
+      </div>
+    </section>
+    <section>
+      <h3>Save File</h3>
+      <div class="setting-row">
+        <label>Save file</label>
+        <span class="pp-value" id="saveFilePathDisplay" title="Current save file name">Not set</span>
+        <button class="btn btn-sm" id="btnChangeSaveFile" title="Pick a different JSON file for saving" onclick="changeSaveFile()">Change File</button>
+      </div>
+    </section>
+    <section>
+      <h3>Data Management</h3>
+      <div class="setting-row">
+        <label>Reset all data to defaults</label>
+        <button class="btn btn-danger btn-sm" id="btnResetData" title="Reset all data to factory defaults" onclick="resetData()">Reset</button>
+      </div>
+    </section>
+  `;
+  updateSaveFileDisplay();
+}
+
+function toggleWorkingDay(i) {
+  settings.workingDays[i] = document.querySelector(`[data-wd="${i}"]`).checked;
+  saveSettings();
+  renderTimeline();
+}
+
+function changePhaseColor(phaseId, color) {
+  settings.phaseColors[phaseId] = color;
+  const p = data.phases.find(x => x.id === phaseId);
+  if (p) p.color = color;
+  saveSettings();
+  saveData();
+  renderTimeline();
+  const row = document.querySelector(`[data-phase-id="${phaseId}"] .color-hex`);
+  if (row) row.textContent = color;
+}
+
+// ===== SAVE FILE LOCATION =====
+
+function updateSaveFileDisplay() {
+  const el = document.getElementById('saveFilePathDisplay');
+  if (!el) return;
+  if (savedFileHandle) {
+    el.textContent = savedFileHandle.name;
+    el.title = 'Save file: ' + savedFileHandle.name;
+  } else {
+    el.textContent = 'testplanner-data.json (local storage)';
+    el.title = 'Data is saved to local browser storage by default. Use Change File to pick a real file location.';
+  }
+}
+
+async function changeSaveFile() {
+  try {
+    const opts = {
+      suggestedName: 'testplanner-data.json',
+      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+    };
+    if (savedFileHandle) opts.startIn = savedFileHandle;
+    const handle = await window.showSaveFilePicker(opts);
+    savedFileHandle = handle;
+    await storeFileHandle(handle);
+    updateSaveFileDisplay();
+    showToast('Save file location updated', 'success');
+  } catch (err) {
+    if (err.name !== 'AbortError') showToast('Failed to set save file', 'error');
+  }
+}
+
+// ===== SAVE TO FILE / LOAD FROM FILE =====
+let savedFileHandle = null;
+
+async function saveToFile() {
+  // Always persist to OPFS (silent, no dialog, survives page reloads)
+  await saveToOPFS();
+  // Also write to the user-configured file handle if available
+  if (savedFileHandle) {
+    try {
+      const payload = { data, settings, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const writable = await savedFileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      updateSaveFileDisplay();
+      showToast('Data saved', 'success');
+      return;
+    } catch (err) {
+      showToast('File save failed', 'error');
+      return;
+    }
+  }
+  // No file handle configured — show persistent notification
+  updateSaveFileDisplay();
+  openModal(`
+    <h2>No Save File Configured</h2>
+    <p>Data has been saved to local browser storage, but no persistent file has been set up yet.</p>
+    <p>Use the <strong>Change File</strong> button in <strong>Settings → Save File</strong> to choose a location on your computer. After that, every Save will write silently to that file.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()" title="Acknowledge and close">OK</button>
+    </div>
+  `);
+}
+
+async function loadFromFile() {
+  try {
+    const handle = await getStoredFileHandle();
+    if (!handle) return;
+    savedFileHandle = handle;
+    const file = await handle.getFile();
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    if (payload.data) { data = payload.data; Store.setData(data); }
+    if (payload.settings) { settings = payload.settings; Store.setSettings(settings); }
+    renderTimeline();
+    renderMasterData();
+    renderSettings();
+    checkConflicts();
+    showToast('Auto-loaded saved data', 'success');
+  } catch (err) {
+    // Handle not available anymore, ignore
+  }
+}
+
+async function storeFileHandle(handle) {
+  try {
+    const db = await idbOpen('testplanner-fs', 1, (db) => {
+      if (!db.objectStoreNames.contains('handles')) {
+        db.createObjectStore('handles');
+      }
+    });
+    const tx = db.transaction('handles', 'readwrite');
+    tx.objectStore('handles').put(handle, 'saveHandle');
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+  } catch (err) { /* IndexedDB not available */ }
+}
+
+async function getStoredFileHandle() {
+  try {
+    const db = await idbOpen('testplanner-fs', 1);
+    if (!db.objectStoreNames.contains('handles')) return null;
+    const tx = db.transaction('handles', 'readonly');
+    const store = tx.objectStore('handles');
+    const handle = await new Promise((res, rej) => {
+      const req = store.get('saveHandle');
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+    return handle;
+  } catch { return null; }
+}
+
+function idbOpen(name, version, upgrade) {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(name, version);
+    req.onupgradeneeded = (e) => { if (upgrade) upgrade(e.target.result); };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// ===== ORIGIN PRIVATE FILE SYSTEM (silent local persistence) =====
+async function getOPFSRoot() {
+  try {
+    if (navigator.storage && navigator.storage.getDirectory) {
+      return await navigator.storage.getDirectory();
+    }
+  } catch {}
+  return null;
+}
+
+async function saveToOPFS() {
+  try {
+    const root = await getOPFSRoot();
+    if (!root) return;
+    const fileHandle = await root.getFileHandle('testplanner-data.json', { create: true });
+    const writable = await fileHandle.createWritable();
+    const payload = { data, settings, exportedAt: new Date().toISOString() };
+    await writable.write(JSON.stringify(payload, null, 2));
+    await writable.close();
+  } catch {}
+}
+
+async function loadFromOPFS() {
+  try {
+    const root = await getOPFSRoot();
+    if (!root) return;
+    const fileHandle = await root.getFileHandle('testplanner-data.json');
+    const file = await fileHandle.getFile();
+    if (file.size === 0) return;
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    if (payload.data) { data = payload.data; Store.setData(data); }
+    if (payload.settings) { settings = payload.settings; Store.setSettings(settings); }
+  } catch {}
+}
+
+// ===== IMPORT / EXPORT =====
+function exportData() {
+  const payload = { data, settings, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'testplanner-export.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported', 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if (payload.data) {
+        data = payload.data;
+        Store.setData(data);
+      }
+      if (payload.settings) {
+        settings = payload.settings;
+        Store.setSettings(settings);
+      }
+      renderTimeline();
+      renderMasterData();
+      renderSettings();
+      checkConflicts();
+      showToast('Data imported successfully', 'success');
+    } catch (err) {
+      showToast('Invalid JSON file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetData() {
+  if (!confirm('This will reset all data to defaults. Are you sure?')) return;
+  data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  Store.setData(data);
+  Store.setSettings(settings);
+  closePropertyPanel();
+  renderTimeline();
+  renderMasterData();
+  renderSettings();
+  checkConflicts();
+  showToast('Data reset to defaults', 'success');
+}
+
+// ===== RIGHT CLICK CONTEXT (delete entry) =====
+document.addEventListener('contextmenu', (e) => {
+  const bar = e.target.closest('.planning-bar');
+  if (bar) {
+    e.preventDefault();
+    const eid = bar.dataset.eid;
+    if (confirm('Delete this planning entry?')) {
+      data.planningEntries = data.planningEntries.filter(x => x.id !== eid);
+      if (propPanelEntryId === eid) closePropertyPanel();
+      saveData();
+      showToast('Entry deleted', 'success');
+    }
+  }
+});
+
+// ===== DOUBLE-CLICK TO OPEN PROPERTY PANEL =====
+document.addEventListener('dblclick', (e) => {
+  const bar = e.target.closest('.planning-bar');
+  if (bar) {
+    const eid = bar.dataset.eid;
+    openPropertyPanel(eid);
+  }
+});
+
+// ===== TIMELINE PAN DRAG =====
+const tlEl = document.getElementById('planningTimeline');
+tlEl.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  if (!e.target.closest('.day-cell')) return;
+  if (e.target.closest('.planning-bar')) return;
+  isPanning = true;
+  panStartX = e.clientX;
+  panStartScrollLeft = tlEl.scrollLeft;
+  tlEl.classList.add('grabbing');
+  e.preventDefault();
+});
+document.addEventListener('mousemove', (e) => {
+  if (!isPanning) return;
+  const dx = e.clientX - panStartX;
+  tlEl.scrollLeft = panStartScrollLeft - dx;
+});
+document.addEventListener('mouseup', () => {
+  if (!isPanning) return;
+  isPanning = false;
+  tlEl.classList.remove('grabbing');
+});
+
+// ===== INIT =====
+function init() {
+  syncPhaseColors();
+  // Load from OPFS first (silent local persistence), then file handle
+  loadFromOPFS().then(() => {
+    renderTimeline();
+    renderMasterData();
+    renderSettings();
+    checkConflicts();
+    loadFromFile().then(() => {
+      renderTimeline();
+      renderMasterData();
+      renderSettings();
+      checkConflicts();
+    }).catch(() => {});
+  }).catch(() => {
+    loadFromFile().then(() => {
+      renderTimeline();
+      renderMasterData();
+      renderSettings();
+      checkConflicts();
+    }).catch(() => {
+      renderTimeline();
+      renderMasterData();
+      renderSettings();
+      checkConflicts();
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>

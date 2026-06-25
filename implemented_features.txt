@@ -1,0 +1,139 @@
+# Testplanner - Implemented Features
+
+## Based on DesignDocument_chatGPT_en.txt
+
+### Timeline
+- Horizontal timeline view at day-level granularity
+- Each day visible and labeled with calendar day number
+- Month labels displayed (e.g. "July 2026")
+- Weekends visually highlighted (gray background)
+- Non-plannable days shown with diagonal pattern overlay
+- Current day highlighted (yellow)
+- Configurable time range via date inputs + month navigation buttons
+- "Today" button scrolls timeline to current date
+
+### Working Day Configuration
+- Each weekday can be enabled/disabled as a planning day
+- Default: Monday-Friday enabled, Saturday-Sunday disabled
+- Non-plannable days visually marked on timeline
+- Scheduling on excluded days prevented (snaps to next plannable day)
+
+### Master Data: Testers
+- Unique ID for each tester
+- Name, Email (optional), Team (optional), Active status
+- Create tester
+- Edit tester
+- Deactivate/Activate tester
+- Delete tester (cascades to planning entries)
+
+### Master Data: Test Phases
+- Unique ID, Name, Sequence number, Display color
+- Default phases: Analysis (blue), Planning (orange), Execution (green)
+- Create phase
+- Edit phase
+- Delete phase (cascades to planning entries)
+- Define phase order (reorder with move up/down)
+
+### Master Data: Test Objects
+- Unique ID, Name, Description, Status (optional), Priority (optional)
+- Create test object
+- Edit test object
+- Delete test object (cascades to planning entries)
+
+### Resource Planning
+- Assign test object to one or more testers via planning entries
+- Planning entry fields: Test Object, Tester, Phase, Start Date, End Date, Comment
+- Create planning entry via "+ Entry" button or modal form
+- Edit planning entry via:
+  - Double-click bar (opens property panel with editable fields)
+  - Context menu on bar for delete
+- Planning entries visualized as colored timeline bars
+- Bars display phase name and use phase color
+
+### Visual Representation
+- Phase colors configurable in Settings
+- Resource conflicts visually emphasized (pulsing red outline on bars)
+- Weekend highlighting
+- Non-plannable day pattern
+- Current day highlight
+- Phase color dots in tables
+
+### Validation
+- Double-booking detection (same tester, overlapping dates)
+- Overlapping assignments shown in conflict panel (red warning)
+- Phase overlap prevention (same test object, any phase)
+
+### Configuration / Settings
+- Working days: enable/disable each weekday
+- Phase colors: change via color picker
+- Display settings:
+  - Highlight weekends toggle
+  - Highlight today toggle
+  - Timeline range (months)
+
+### Data Persistence
+- localStorage for automatic save between sessions
+- Export data as JSON download
+- Import data from JSON file
+- Reset all data to defaults
+- Save to File (File System Access API) + auto-load on browser start
+
+### Data Model
+- Tester: Id, Name, Email, Team, Active
+- TestObject: Id, Name, Description, Status, Priority
+- Phase: Id, Name, Sequence, Color
+- PlanningEntry: Id, TestObjectId, TesterId, PhaseId, StartDate, EndDate, Comment
+- Configuration: WorkingDays, PhaseColors, DisplaySettings
+- Two JSON files: data + settings
+
+---
+
+## Based on Improvements01.txt
+
+1. Phases must not overlap for the same test object (validated on save, drag, resize, property panel)
+2. Drag bar no longer jumps (uses CSS transform + direct style updates, no full re-render during drag)
+3. Tooltips on all interactive UI elements (title attributes on buttons, inputs, selects, bars, etc.)
+4. Resize handles on planning bars (left = change start date, right = change end date, ew-resize cursor)
+5. Human-readable unique IDs on all UI elements (btn*, nav*, md*, tl*, f[TPOE]*, bar-{id}, plr-{id}, tlr-{id}, pp*)
+6. Property panel on double-click (side panel with editable fields: Test Object, Tester, Phase, Start/End Date, Duration, Comment; Apply + Delete)
+7. Double-click test object name to rename (inline prompt)
+8. Save button + auto-load (File System Access API, IndexedDB handle storage, loads on browser start)
+
+---
+
+## Based on Improvements02.txt
+
+1. Settings tab: save file path shown and changeable (displays filename, "Change" button to re-select)
+2. Resize length accuracy fixed (removed off-by-one-day error in width and end-date calculations)
+3. Double-click to-meta to change assignments (opens new planning entry form with test object pre-selected)
+4. Unique IDs on planning-left-row (plr-{id}) and timeline-row (tlr-{id})
+5. Double-click planning bar shows property panel with editable properties (verified from Improvements01)
+
+---
+
+## Additional Features (Session 2026-06-25)
+
+### Master Data Enhancements
+- Phase description field (editable in Add/Edit form, displayed in table)
+- Phase Deactivate/Activate toggle (same pattern as testers, inactive rows styled with strikethrough)
+- Test Object Deactivate/Activate toggle
+- Inactive phases, testers, and test objects hidden from Planning view dropdowns and timeline rows
+- Phase lead time (days) and processing time (days) metadata fields
+
+### Planning Timeline
+- "+ Add" button in planning left panel header for quick test object creation
+- Double-click empty day cell opens New Planning Entry dialog with test object and date pre-selected
+- Zoom in/out controls (− / +) in timeline toolbar (20-80px day width, persisted in settings)
+- Click-and-hold drag on empty day cells to pan timeline horizontally (grab cursor)
+
+### Save & Persistence
+- Origin Private File System (OPFS) as silent default persistence (no dialog, survives reload)
+- "Set Folder" flow removed; only "Change File" (showSaveFilePicker) for file-based persistence
+- Save button never opens a dialog — writes to OPFS + optionally to configured file handle
+- Modal notification (requires acknowledgment) when Save clicked with no file configured
+- Default filename: testplanner-data.json
+
+### UI Refinements
+- Export Data / Import Data hidden behind "Data ▼" dropdown in header
+- Property panel: Cancel button between Apply and Delete, Delete button right-aligned
+- Phase table shows Lead Time and Proc. Time columns

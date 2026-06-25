@@ -1,0 +1,248 @@
+# Testplanner - Use Cases
+
+## Master Data Management
+
+### UC-01: Manage Testers
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Master Data → Testers tab
+  2. System displays list of all testers with Name, Email, Team, Status
+  3. User can add a tester (name required, email/team optional)
+  4. User can edit an existing tester (update name, email, team, active status)
+  5. User can deactivate/activate a tester (inactive testers are hidden from Planning)
+  6. User can delete a tester (cascading removes all linked planning entries)
+- **Postcondition:** Tester data is saved and persisted
+
+### UC-02: Manage Phases
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Master Data → Phases tab
+  2. System displays list of all phases with Order, Name, Description, Color, Lead Time, Proc. Time, Status
+  3. User can add a phase (name required, description, color, lead time, processing time optional)
+  4. User can edit an existing phase
+  5. User can reorder phases using the up arrow (↑) button
+  6. User can deactivate/activate a phase
+  7. User can delete a phase (cascading removes all linked planning entries)
+- **Postcondition:** Phase data is saved and persisted
+
+### UC-03: Manage Test Objects
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Master Data → Test Objects tab
+  2. System displays list of all test objects with Name, Description, Status, Priority, Active
+  3. User can add a test object (name required, description/status/priority optional)
+  4. User can edit an existing test object
+  5. User can deactivate/activate a test object
+  6. User can delete a test object (cascading removes all linked planning entries)
+- **Postcondition:** Test object data is saved and persisted
+
+## Resource Planning
+
+### UC-04: Create Planning Entry
+- **Actor:** User
+- **Precondition:** At least one tester, phase, and test object exist
+- **Main flow:**
+  1. User clicks "+ Entry" button in timeline toolbar, OR double-clicks a to-meta area, OR double-clicks an empty day cell
+  2. System opens modal form with fields: Test Object, Tester, Phase, Start Date, End Date, Comment
+  3. User selects a test object from dropdown (only active objects listed)
+  4. User selects a tester from dropdown (only active testers listed)
+  5. User selects a phase from dropdown (only active phases listed)
+  6. User sets start and end dates (snapped to plannable days)
+  7. User optionally enters a comment
+  8. User clicks "Create" to save
+- **Postcondition:** New planning entry appears as a colored bar on the timeline
+
+### UC-05: Edit Planning Entry (Property Panel)
+- **Actor:** User
+- **Precondition:** Planning entry exists on the timeline
+- **Main flow:**
+  1. User double-clicks a planning bar
+  2. System opens the property panel (side panel) with current values
+  3. User can modify: Test Object, Tester, Phase, Start Date, End Date, Comment
+  4. User clicks "Apply" to save changes
+  5. User can click "Cancel" to discard changes
+- **Postcondition:** Planning entry is updated and timeline re-rendered
+
+### UC-06: Delete Planning Entry
+- **Actor:** User
+- **Precondition:** Planning entry exists
+- **Main flow:**
+  1. User double-clicks a planning bar to open property panel
+  2. User clicks "Delete" button (right-aligned)
+  3. System asks for confirmation
+  4. User confirms deletion
+- **Postcondition:** Planning entry is removed from timeline
+
+### UC-07: Drag Planning Bar to Reschedule
+- **Actor:** User
+- **Precondition:** Planning entry exists as a timeline bar
+- **Main flow:**
+  1. User clicks and holds a planning bar
+  2. User drags the bar horizontally to a new date position
+  3. System updates the start and end dates in real time (no-jump dragging)
+  4. User releases the mouse button
+  5. System detects if dates changed and only then saves and re-renders
+- **Postcondition:** Planning entry dates are updated on the timeline
+
+### UC-08: Resize Planning Bar
+- **Actor:** User
+- **Precondition:** Planning entry exists as a timeline bar
+- **Main flow:**
+  1. User hovers over left or right edge of a planning bar (cursor changes to ew-resize)
+  2. User clicks and drags the resize handle
+  3. Left handle changes start date, right handle changes end date
+  4. User releases the mouse button
+  5. System saves and re-renders (no-op guard if dates unchanged)
+- **Postcondition:** Planning entry duration is updated
+
+### UC-09: Rename Test Object Inline
+- **Actor:** User
+- **Precondition:** Test object exists in the timeline left panel
+- **Main flow:**
+  1. User double-clicks the test object name in the planning left panel
+  2. System prompts for a new name
+  3. User enters a new name and confirms
+- **Postcondition:** Test object name is updated
+
+## Timeline Navigation
+
+### UC-10: Navigate Timeline
+- **Actor:** User
+- **Precondition:** Timeline is visible
+- **Main flow:**
+  1. User can change from/to dates via date inputs
+  2. User can navigate one month back/forward using "← Month" / "Month →" buttons
+  3. User clicks "Today" to scroll to the current date
+- **Postcondition:** Timeline shows the requested date range
+
+### UC-11: Zoom Timeline
+- **Actor:** User
+- **Precondition:** Timeline is visible
+- **Main flow:**
+  1. User clicks "+" to zoom in (wider day columns) or "−" to zoom out (narrower day columns)
+  2. System updates the day column width (range: 20-80px)
+  3. Zoom level is saved in settings for persistence
+- **Postcondition:** Timeline displays with adjusted day width
+
+### UC-12: Pan Timeline
+- **Actor:** User
+- **Precondition:** Timeline is visible with horizontal scroll
+- **Main flow:**
+  1. User clicks and holds on an empty day cell
+  2. User drags the mouse horizontally
+  3. Timeline scrolls synchronously with the mouse
+  4. User releases the mouse button
+- **Postcondition:** Timeline is scrolled to the desired position
+
+## Conflict Detection
+
+### UC-13: Detect Resource Conflicts
+- **Actor:** System (automatic)
+- **Precondition:** Planning entries exist
+- **Main flow:**
+  1. System checks all planning entries for overlapping date ranges with the same tester
+  2. Conflicting entries are outlined with a pulsing red border
+  3. Conflict panel displays a list of all conflicts with details
+  4. System also prevents overlapping entries for the same test object (any phase)
+- **Postcondition:** Conflicts are visually flagged to the user
+
+## Configuration
+
+### UC-14: Configure Working Days
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Settings → Working Days
+  2. User toggles each weekday on/off as a planning day
+  3. Non-plannable days are visually marked on the timeline
+  4. Scheduling on excluded days is prevented (snaps to next plannable day)
+- **Postcondition:** Working day configuration is saved
+
+### UC-15: Configure Phase Colors
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Settings → Save File section
+  2. User clicks the color picker next to a phase
+  3. User selects a new color
+  4. Phase color updates immediately on the timeline and in tables
+- **Postcondition:** Phase color is saved
+
+### UC-16: Configure Display Settings
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Settings → Display Settings section
+  2. User can toggle weekend highlighting on/off
+  3. User can toggle today highlighting on/off
+  4. User can set the timeline range in months
+- **Postcondition:** Display settings are saved
+
+## Data Persistence
+
+### UC-17: Save Data
+- **Actor:** User
+- **Precondition:** Data exists
+- **Main flow:**
+  1. User clicks "Save" button in the header
+  2. If a file is configured via "Change File":
+     - System writes silently to the configured JSON file (no dialog)
+     - System also writes to local browser storage (OPFS)
+  3. If no file is configured:
+     - System writes silently to OPFS
+     - System shows a modal notification requiring acknowledgment
+- **Postcondition:** Data is persisted
+
+### UC-18: Configure Save File
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Settings → Save File
+  2. User clicks "Change File"
+  3. System opens the native Save As dialog (start-in defaults to previous location if set)
+  4. User selects a location and filename
+  5. System stores the file handle for silent subsequent saves
+- **Postcondition:** Save file is configured, future saves write silently to this file
+
+### UC-19: Export Data
+- **Actor:** User
+- **Precondition:** Data exists
+- **Main flow:**
+  1. User clicks "Data ▼" dropdown in the header
+  2. User selects "Export Data"
+  3. System downloads a JSON file with all data and settings
+- **Postcondition:** JSON file is downloaded
+
+### UC-20: Import Data
+- **Actor:** User
+- **Precondition:** JSON file from previous export exists
+- **Main flow:**
+  1. User clicks "Data ▼" dropdown in the header
+  2. User selects "Import Data"
+  3. System opens a file picker
+  4. User selects a JSON file
+  5. System imports data and settings, then re-renders the full application
+- **Postcondition:** All data is replaced with imported data
+
+### UC-21: Reset Data
+- **Actor:** User
+- **Precondition:** Application is loaded
+- **Main flow:**
+  1. User navigates to Settings → Data Management
+  2. User clicks "Reset"
+  3. System asks for confirmation
+  4. User confirms
+  5. System resets all data to defaults
+- **Postcondition:** Application shows default seed data
+
+### UC-22: Auto-Load Data on Startup
+- **Actor:** System (automatic)
+- **Precondition:** Application is loaded in the browser
+- **Main flow:**
+  1. System loads data from Origin Private File System (OPFS)
+  2. If a file handle was previously configured, system also loads from that file
+  3. Data is merged and displayed
+- **Postcondition:** Previous session data is restored
