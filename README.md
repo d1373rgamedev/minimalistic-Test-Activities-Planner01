@@ -1,37 +1,42 @@
-# Testplanner
+# Minimalistic Test Activities Planner
 
-A standalone, single-file test planning web application for scheduling tester resources, managing test phases and test objects, and visualizing assignments on an interactive timeline.
+The goal of this project is to provide a clean, lightweight tool for planning test activities without the complexity of full project management suites. It focuses on simplicity, allowing testers to quickly create, organize, and review their planned work.
 
-No server, no build step — just open `index.html` in a browser.
+A **minimalistic browser-based planner** for organizing and tracking software testing activities.
+
+The application runs entirely in your web browser as a **single HTML file**. No installation, server, or database is required. Simply open the file in your browser and start planning.
+
+## Screenshots
+<img width="447" height="156" alt="image" src="https://github.com/user-attachments/assets/58a9360b-f91e-4ad2-b680-0c371ae396e6" />
+<img width="650" height="145" alt="image" src="https://github.com/user-attachments/assets/a83170d8-3f04-46f5-8e8d-4c5d258ef2d9" />
+<img width="650" height="135" alt="image" src="https://github.com/user-attachments/assets/2e399366-f06c-43ca-ba68-3fe6568530f1" />
+<img width="348" height="308" alt="image" src="https://github.com/user-attachments/assets/b3073420-1fa0-4a59-a445-5eaada5289ba" />
 
 ## Features
 
-- **Interactive Timeline** — day-level horizontal timeline with month labels, weekend/today/non-plannable day highlighting, zoom in/out, and click-drag panning
-- **Resource Planning** — create planning entries by assigning test objects to testers within test phases; visualized as colored, draggable, resizable bars
-- **Master Data Management** — full CRUD for testers, phases, and test objects with activate/deactivate toggles; inactive items hidden from planning
-- **Conflict Detection** — automatic detection of overlapping tester assignments (pulsing red outline + conflict panel) and phase overlap prevention
-- **Configurable Settings** — working days, phase colors, display toggles (weekend/today highlights, timeline range)
-- **Property Panel** — double-click any planning bar to edit all fields in a side panel with Apply, Cancel, and Delete
-- **Data Persistence** — automatic save to browser storage (localStorage + OPFS), optional save to a real JSON file via File System Access API, export/import, and reset to defaults
+* Minimalistic, distraction-free interface
+* Organize and track software testing activities
+* Self-contained single HTML file
+* No installation required
+* No external dependencies
+* Lightweight and easy to share
 
-## Usage
+## Why?
 
-1. Open `index.html` in a modern browser (Chrome/Edge recommended for full File System Access API support)
-2. Use the **Planning** tab to view and manage the timeline
-3. Use the **Master Data** tab to manage testers, phases, and test objects
-4. Use the **Settings** tab to configure working days, phase colors, display options, and save file location
-5. Click **Save** to persist data — data is always saved locally; use Settings → Change File to save to a real JSON file
+Many planning tools include far more features than are needed for day-to-day test activity planning.
 
-## Data Model
+This project intentionally stays **minimalistic**, providing a simple way to:
 
-| Entity | Fields |
-|--------|--------|
-| Tester | Id, Name, Email, Team, Active |
-| Phase | Id, Name, Description, Sequence, Color, Lead Time, Processing Time, Active |
-| Test Object | Id, Name, Description, Status, Priority, Active |
-| Planning Entry | Id, TestObjectId, TesterId, PhaseId, StartDate, EndDate, Comment |
+* plan upcoming test activities
+* maintain an overview of your testing work
+* focus on the task instead of the tool
 
-## Requirements
+By keeping everything in a single HTML file, the planner remains portable, lightweight, and easy to use wherever a modern web browser is available.
 
-- A modern web browser (Chrome, Edge, Firefox, Safari)
-- No server, no internet (once loaded), no Node.js, no build tools
+## Getting Started
+
+1. Download or clone this repository.
+2. Open the HTML file in your preferred web browser.
+3. Start planning your test activities.
+
+No installation or additional software is required.
